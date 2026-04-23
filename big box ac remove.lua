@@ -1,3 +1,9 @@
+if game.PlaceId == 17625359962 then
+  -- ok
+else
+  game.Players.LocalPlayer:Kick("Game is not supported")
+end
+
 local success, err = pcall(function()
   assert(getgc, "executor missing required function getgc")
   assert(debug.info, "executor missing required function debug.info")
