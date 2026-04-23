@@ -1,28 +1,111 @@
-if game.PlaceId ~= 17625359962 then
-    game.Players.LocalPlayer:Kick("WRONG GAME")
+if not game:IsLoaded() then
+    game.Loaded:Wait()
+end
+if game.GameId ~= 6035872082 then
     return
 end
 
-local success, err = pcall(function()
-  assert(getgc, "executor missing required function getgc")
-  assert(debug.info, "executor missing required function debug.info")
-  assert(hookfunction, "executor missing required function hookfunction")
-  assert(getconnections, "executor missing required function getconnections")
-    
-  for _,v in getgc() do
-      if typeof(v) == "function" and string.find(debug.info(v, "s"), "AnalyticsPipelineController") then
-          hookfunction(v, function() return task.wait(9e9) end)
-      end
-  end
-  
-  for _,v in getconnections(game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("AnalyticsPipeline"):WaitForChild("RemoteEvent").OnClientEvent) do 
-    hookfunction(v.Function, function() end)
-  end
-end)
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer or Players:GetPropertyChangedSignal("LocalPlayer"):Wait() and Players.LocalPlayer
 
+print("Rivals Anticheat Disabler executed!")
+local success, err = pcall(function()
+    assert(getgc, "executor missing required function getgc")
+    assert(debug and debug.info, "executor missing required function debug.info (somehow)")
+    assert(hookfunction, "executor missing required function hookfunction")
+    assert(getconnections, "executor missing required function getconnections")
+    assert(newcclosure, "executor missing required function newcclosure")
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")
+    local LogService = game:GetService("LogService")
+    local ScriptContext = game:GetService("ScriptContext")
+    task.spawn(function()
+        local hooked = 0
+        for _, v in pairs(getgc(true)) do
+            if typeof(v) == "function" then
+                local ok, src = pcall(function()
+                    return debug.info(v, "s")
+                end)
+                if ok and type(src) == "string" and string.find(src, "AnalyticsPipelineController") then
+                    hooked += 1
+                    local oldfn
+                    oldfn = hookfunction(v, newcclosure(function(...)
+                        return wait(9e9)
+                    end))
+                end
+            end
+        end
+        print("Hanged " .. hooked .. " functions")
+    end)
+    task.spawn(function()
+        local ok, remote = pcall(function()
+            return ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("AnalyticsPipeline"):WaitForChild("RemoteEvent")
+        end)
+        if ok and remote and remote.OnClientEvent then
+            local hooked = 0
+            for _, conn in pairs(getconnections(remote.OnClientEvent)) do
+                if conn and conn.Function then
+                    if pcall(function()
+                        hookfunction(conn.Function, newcclosure(function(...)
+                        end))
+                    end) then 
+                        hooked += 1
+                    end
+                end
+            end
+            print("Hooked " .. hooked .. " anticheat remotes")
+        end
+    end)
+    task.spawn(function()
+        local hooked = 0
+        for _, conn in pairs(getconnections(LogService.MessageOut)) do
+            if conn and conn.Function then
+                if pcall(function()
+                    hookfunction(conn.Function, newcclosure(function(...)
+                    end))
+                end) then
+                    hooked += 1
+                end
+            end
+        end
+        print("Hooked " .. hooked .. " MessageOut connections")
+    end)
+    task.spawn(function()
+        local hooked = 0
+        for _, conn in ipairs(getconnections(ScriptContext.Error)) do
+            if pcall(function()
+                conn:Disable()
+            end) then
+                hooked += 1
+            end
+        end
+        print("Hooked " .. hooked .. " error connections")
+        pcall(function()
+            hookfunction(ScriptContext.Error.Connect, newcclosure(function(...)
+                return nil
+            end))
+        end)
+    end)
+    task.spawn(function()
+        local KickNames = {
+            "Kick",
+            "kick"
+        }
+        for _, name in ipairs(KickNames) do
+            local fn = LocalPlayer[name]
+            if type(fn) == "function" then
+                local oldkick
+                oldkick = hookfunction(fn, newcclosure(function(self, ...)
+                    if self == LocalPlayer then
+                        return
+                    end
+                    return oldkick(self, ...)
+                end))
+            end
+        end
+    end)
+end)
 if not success then
-  game.Players.LocalPlayer:Kick("use a supported executor from fracternal.cc")
+    game.Players.LocalPlayer:Kick("Rivals Anticheat Disabler failed: " .. tostring(err))
 else
-  print("fracternal > ue > kicia\nfuck all retards")
-  loadstring(game:HttpGet("https://raw.githubusercontent.com/DeoSCRIPTS/Fracternal/refs/heads/main/logic.lua"))()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/DeoSCRIPTS/Fracternal/refs/heads/main/logic.lua"))()
 end
