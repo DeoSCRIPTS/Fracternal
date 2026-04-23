@@ -1,7 +1,6 @@
-if game.PlaceId == 17625359962 then
-  -- ok
-else
-  game.Players.LocalPlayer:Kick("Game is not supported")
+if game.PlaceId ~= 17625359962 then
+    game.Players.LocalPlayer:Kick("WRONG GAME")
+    return
 end
 
 local success, err = pcall(function()
