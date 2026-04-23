@@ -24,5 +24,5 @@ if not success then
   game.Players.LocalPlayer:Kick("use a supported executor from fracternal.cc")
 else
   print("fracternal > ue > kicia\nfuck all retards")
-  loadstring(game:HttpGet(""))()
+  loadstring(game:HttpGet("https://raw.githubusercontent.com/DeoSCRIPTS/Fracternal/refs/heads/main/logic.lua"))()
 end
