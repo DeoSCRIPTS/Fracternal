@@ -1,0 +1,23 @@
+local success, err = pcall(function()
+  assert(getgc, "executor missing required function getgc")
+  assert(debug.info, "executor missing required function debug.info")
+  assert(hookfunction, "executor missing required function hookfunction")
+  assert(getconnections, "executor missing required function getconnections")
+    
+  for _,v in getgc() do
+      if typeof(v) == "function" and string.find(debug.info(v, "s"), "AnalyticsPipelineController") then
+          hookfunction(v, function() return task.wait(9e9) end)
+      end
+  end
+  
+  for _,v in getconnections(game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("AnalyticsPipeline"):WaitForChild("RemoteEvent").OnClientEvent) do 
+    hookfunction(v.Function, function() end)
+  end
+end)
+
+if not success then
+  game.Players.LocalPlayer:Kick("use a supported executor from fracternal.cc")
+else
+  print("fracternal > ue > kicia\nfuck all retards")
+  loadstring(game:HttpGet(""))()
+end
